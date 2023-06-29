@@ -4,6 +4,7 @@ import io.qameta.allure.Step;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import org.apache.http.HttpStatus;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,11 +19,13 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
 @RunWith(Parameterized.class)
-public class CreateOrderTest extends ScooterBaseTest {
+public class CreateOrderTest {
 
     private final List<String> color;
 
     private Integer orderNumber;
+
+    private final OrderClient orderClient = new OrderClient();
 
     public CreateOrderTest(List<String> color) {
         this.color = color;
@@ -30,48 +33,31 @@ public class CreateOrderTest extends ScooterBaseTest {
 
     @Before
     public void setUp() {
-        RestAssured.baseURI = TestData.baseUrl;
+        RestAssured.baseURI = TestData.BASE_URL;
     }
 
     @After
-    @Step("Отправка PUT в /api/v1/orders/cancel?track=")
     public void cleanData() {
-        given().put("/api/v1/orders/cancel?track="  + orderNumber);
+        orderClient.deleteOrder(orderNumber);
     }
 
     @Parameterized.Parameters
     public static Object[][] getData() {
         return new Object[][]{
-                {Collections.emptyList()},
+                {List.of()},
                 {List.of("\"BLACK\"")},
                 {List.of("\"GREY\"")},
-                {Arrays.asList("\"BLACK", "GREY\"")}
+                {List.of("\"BLACK", "GREY\"")}
         };
     }
 
     @Test
     @DisplayName("Проверка успешного созадния заказа")
     @Description("Проверка возврата статуса 201 и track")
-    @Step("Отправка POST в /api/v1/orders")
     public void createOrderSuccess() {
-        orderNumber = given()
-                .header("Content-type", "application/json")
-                .and()
-                .body("{\n" +
-                        "    \"firstName\": \"Naruto\",\n" +
-                        "    \"lastName\": \"Uchiha\",\n" +
-                        "    \"address\": \"Konoha, 142 apt.\",\n" +
-                        "    \"metroStation\": 4,\n" +
-                        "    \"phone\": \"+7 800 355 35 35\",\n" +
-                        "    \"rentTime\": 5,\n" +
-                        "    \"deliveryDate\": \"2020-06-06\",\n" +
-                        "    \"comment\": \"Saske, come back to Konoha\",\n" +
-                        "    \"color\": "+ color.toString() +
-                        "}")
-                .when()
-                .post("/api/v1/orders")
+        orderNumber = orderClient.createOrder(color)
                 .then()
-                .statusCode(201)
+                .statusCode(HttpStatus.SC_CREATED)
                 .and()
                 .body("track", notNullValue())
                 .extract().as(CreateOrderResponseDto.class).getTrack();

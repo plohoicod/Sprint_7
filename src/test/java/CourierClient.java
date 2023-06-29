@@ -6,53 +6,52 @@ import io.restassured.response.Response;
 
 import static io.restassured.RestAssured.given;
 
+public class CourierClient {
 
-public class ScooterBaseTest {
+    static final String COURIER_API = "/api/v1/courier";
 
-    public static final CreateCourierRequestDto createCourierDto = new CreateCourierRequestDto(TestData.login1, TestData.password1, TestData.name1);
-
+    public final CreateCourierRequestDto createCourierDto = new CreateCourierRequestDto(TestData.LOGIN_1, TestData.PASSWORD_1, TestData.NAME_1);
 
     @Step("Отправка POST в /api/v1/courier")
-    protected Response createCourier(CreateCourierRequestDto dto) {
+    public Response createCourier(CreateCourierRequestDto dto) {
         return
                 given()
                         .header("Content-type", "application/json")
                         .and()
                         .body(dto)
                         .when()
-                        .post("/api/v1/courier");
+                        .post(COURIER_API);
 
     }
 
     @Step("Отправка DELETE в /api/v1/courier/:id")
-    protected Response deleteCourier(Integer id) {
+    public Response deleteCourier(Integer id) {
         return given()
-                .delete("/api/v1/courier/" + id);
+                .delete(COURIER_API + "/" + id);
     }
 
     @Step("Отправка POST в /api/v1/courier/login")
-    protected Response loginCourier(LoginCourierRequestDto dto) {
+    public Response loginCourier(LoginCourierRequestDto dto) {
         return
                 given()
                         .header("Content-type", "application/json")
                         .and()
                         .body(dto)
                         .when()
-                        .post("/api/v1/courier/login");
+                        .post(COURIER_API + "/login");
     }
 
-    protected Response loginCourier(String login, String password) {
+    public Response loginCourier(String login, String password) {
         LoginCourierRequestDto loginDto = new LoginCourierRequestDto();
         loginDto.setLogin(login);
         loginDto.setPassword(password);
         return loginCourier(loginDto);
     }
 
-    protected void deleteCourier(String login, String password) {
+    public void deleteCourier(String login, String password) {
         LoginCourierRequestDto loginDto = new LoginCourierRequestDto();
         loginDto.setLogin(login);
         loginDto.setPassword(password);
-
 
         LoginCourierResponseDto loginCourierResponseDto = loginCourier(loginDto).as(LoginCourierResponseDto.class);
         deleteCourier(loginCourierResponseDto.getId());
